@@ -1,0 +1,14 @@
+{
+    "type": "message.new",
+    "message": {
+        "id": "dm-anna-max:3",
+        "conversationId": "dm-anna-max",
+        "seq": 3,
+        "version": 1,
+        "authorId": "max",
+        "authorName": "Max",
+        "text": "Lunch at noon?",
+        "sentAtMillis": 1800000000000,
+        "isDeleted": false
+    }
+}

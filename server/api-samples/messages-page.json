@@ -1,0 +1,37 @@
+{
+    "items": [
+        {
+            "id": "anna-bot:3",
+            "conversationId": "anna-bot",
+            "seq": 3,
+            "version": 1,
+            "authorId": "bot",
+            "authorName": "Oliver",
+            "text": "How are you?",
+            "sentAtMillis": 1700000003000,
+            "isDeleted": false
+        },
+        {
+            "id": "anna-bot:2",
+            "conversationId": "anna-bot",
+            "seq": 2,
+            "version": 1,
+            "authorId": "anna",
+            "authorName": "Anna",
+            "text": "Hello",
+            "sentAtMillis": 1700000002000,
+            "isDeleted": false
+        },
+        {
+            "id": "anna-bot:1",
+            "conversationId": "anna-bot",
+            "seq": 1,
+            "version": 1,
+            "authorId": "bot",
+            "authorName": "Oliver",
+            "text": "Hi!",
+            "sentAtMillis": 1700000001000,
+            "isDeleted": false
+        }
+    ]
+}

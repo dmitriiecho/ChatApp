@@ -1,0 +1,23 @@
+{
+    "type": "conversation.updated",
+    "conversation": {
+        "id": "dm-anna-max",
+        "title": "Max",
+        "sortKey": 3,
+        "version": 2,
+        "unreadCount": 1,
+        "lastSeq": 3,
+        "lastReadSeq": 2,
+        "lastMessage": {
+            "id": "dm-anna-max:3",
+            "conversationId": "dm-anna-max",
+            "seq": 3,
+            "version": 1,
+            "authorId": "max",
+            "authorName": "Max",
+            "text": "Lunch at noon?",
+            "sentAtMillis": 1800000000000,
+            "isDeleted": false
+        }
+    }
+}

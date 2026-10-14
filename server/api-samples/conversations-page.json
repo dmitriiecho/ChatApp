@@ -1,0 +1,45 @@
+{
+    "items": [
+        {
+            "id": "dm-anna-max",
+            "title": "Max",
+            "sortKey": 2,
+            "version": 1,
+            "unreadCount": 0,
+            "lastSeq": 2,
+            "lastReadSeq": 2,
+            "lastMessage": {
+                "id": "dm-anna-max:2",
+                "conversationId": "dm-anna-max",
+                "seq": 2,
+                "version": 1,
+                "authorId": "max",
+                "authorName": "Max",
+                "text": "Hi, Anna",
+                "sentAtMillis": 1700000002000,
+                "isDeleted": false
+            }
+        },
+        {
+            "id": "anna-bot",
+            "title": "Oliver",
+            "sortKey": 1,
+            "version": 1,
+            "unreadCount": 1,
+            "lastSeq": 3,
+            "lastReadSeq": 2,
+            "lastMessage": {
+                "id": "anna-bot:3",
+                "conversationId": "anna-bot",
+                "seq": 3,
+                "version": 1,
+                "authorId": "bot",
+                "authorName": "Oliver",
+                "text": "How are you?",
+                "sentAtMillis": 1700000003000,
+                "isDeleted": false
+            }
+        }
+    ],
+    "hasMore": false
+}

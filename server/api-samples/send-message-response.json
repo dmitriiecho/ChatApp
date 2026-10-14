@@ -1,0 +1,33 @@
+{
+    "message": {
+        "id": "anna-bot:4",
+        "conversationId": "anna-bot",
+        "seq": 4,
+        "version": 1,
+        "authorId": "anna",
+        "authorName": "Anna",
+        "text": "Fine, thanks",
+        "sentAtMillis": 1800000000000,
+        "isDeleted": false
+    },
+    "conversation": {
+        "id": "anna-bot",
+        "title": "Oliver",
+        "sortKey": 3,
+        "version": 2,
+        "unreadCount": 0,
+        "lastSeq": 4,
+        "lastReadSeq": 4,
+        "lastMessage": {
+            "id": "anna-bot:4",
+            "conversationId": "anna-bot",
+            "seq": 4,
+            "version": 1,
+            "authorId": "anna",
+            "authorName": "Anna",
+            "text": "Fine, thanks",
+            "sentAtMillis": 1800000000000,
+            "isDeleted": false
+        }
+    }
+}

@@ -1,0 +1,15 @@
+{
+    "type": "message.changed",
+    "message": {
+        "id": "anna-bot:1",
+        "conversationId": "anna-bot",
+        "seq": 1,
+        "version": 2,
+        "authorId": "bot",
+        "authorName": "Oliver",
+        "text": "Hi there!",
+        "sentAtMillis": 1700000001000,
+        "editedAtMillis": 1800000000000,
+        "isDeleted": false
+    }
+}

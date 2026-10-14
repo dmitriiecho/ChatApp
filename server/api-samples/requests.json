@@ -1,0 +1,14 @@
+{
+    "users": "GET /users",
+    "conversations-page": "GET /conversations?limit=50",
+    "conversation": "GET /conversations/anna-bot",
+    "conversation-changes-start": "GET /conversations/changes?limit=200",
+    "conversation-changes": "GET /conversations/changes?since=0&limit=200",
+    "messages-page": "GET /conversations/anna-bot/messages?limit=50",
+    "message-changes-start": "GET /conversations/anna-bot/messages/changes?limit=200",
+    "message-changes": "GET /conversations/anna-bot/messages/changes?since=0&limit=200",
+    "send-message": "POST /conversations/anna-bot/messages",
+    "read": "POST /conversations/anna-bot/read",
+    "bots": "GET /bots",
+    "set-bots": "PUT /bots"
+}

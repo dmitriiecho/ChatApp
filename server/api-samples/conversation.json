@@ -1,0 +1,20 @@
+{
+    "id": "anna-bot",
+    "title": "Oliver",
+    "sortKey": 1,
+    "version": 1,
+    "unreadCount": 1,
+    "lastSeq": 3,
+    "lastReadSeq": 2,
+    "lastMessage": {
+        "id": "anna-bot:3",
+        "conversationId": "anna-bot",
+        "seq": 3,
+        "version": 1,
+        "authorId": "bot",
+        "authorName": "Oliver",
+        "text": "How are you?",
+        "sentAtMillis": 1700000003000,
+        "isDeleted": false
+    }
+}
