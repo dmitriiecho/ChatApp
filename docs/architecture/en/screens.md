@@ -257,7 +257,7 @@ SideEffect {
 }
 ```
 
-`SideEffect` runs before the list measures the change, while it is still where the user left it. A user reading higher up keeps their place.
+`SideEffect` runs before the list measures the change, while it is still where the user left it. A user reading higher up keeps their place. In a chat this is only for the head: a page loaded below a window up in the history stays below, where the user scrolls to it (see [Pagination](pagination.md#new-messages-at-the-bottom)).
 
 &nbsp;
 

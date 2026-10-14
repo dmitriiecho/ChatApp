@@ -39,8 +39,8 @@ The screen doesn't load anything itself. It watches where the user is and sends 
 ```
 
 - **"Near" is 10 items** from the edge (`EDGE_THRESHOLD`), so the next page comes before the user reaches the end.
-- **The check runs again when the number of items or the flags change**, not only when the user scrolls. After a short page the user may still be at the edge, and without this the list would stop.
-- **The items are counted, not the rows.** The loading row at the end comes and goes with every try; counting it, offline the screen would repeat the tries forever.
+- **The check runs again when the window or the flags change**, not only when the user scrolls. After a short page the user may still be at the edge, and without this the list would stop. The chat list watches the number of its chats, the chat the bounds of its window (the newest and the oldest message): a chat window of 300 that moves by a page keeps its size, and counting would miss the move.
+- **Items, not rows.** The loading row at the end comes and goes with every try; counting it, offline the screen would repeat the tries forever.
 - **A second Intent while a page is loading is ignored** by the Executor (`isLoadingMore`, `isLoadingOlder`, `isLoadingNewer`). The Store runs on the main thread, so that check holds without a lock (see [Screens](screens.md#the-store)).
 
 The chat's list is drawn upside down (`reverseLayout = true`): its first item is the newest message, at the bottom by the input. So "the top" of a chat is the end of its list.
@@ -174,6 +174,8 @@ if (newFromSeq == beforeSeq && error != null) throw error
 ```
 
 ### New messages at the bottom
+
+A page loaded below a window up in the history stays below the screen: the list keeps the user's place, and the user scrolls on to it. Following the bottom is only for the head.
 
 A new message from the socket is cached only as a continuation of the cache (`seq == maxSeq + 1`), so it joins the head. When the head grows past 300, its oldest messages go, far above the screen. If the user is within three messages of the bottom, the screen scrolls down to the new one; reading higher up, the user keeps their place.
 

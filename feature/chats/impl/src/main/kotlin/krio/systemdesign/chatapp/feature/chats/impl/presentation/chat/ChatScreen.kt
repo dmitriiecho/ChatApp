@@ -179,7 +179,7 @@ private fun Messages(
 ) {
     ReachedEdges(listState, rows, state, onIntent)
     ReportSeen(listState, rows, onIntent)
-    FollowBottom(listState, bottomKey = rows.firstOrNull()?.key)
+    FollowBottom(listState, bottomKey = rows.firstOrNull()?.key, isHead = !state.hasNewer)
     LazyColumn(
         state = listState,
         modifier = Modifier.fillMaxSize(),
@@ -217,23 +217,31 @@ private fun Messages(
 // A new row at the bottom (a message sent or received) shows when the user is at the very bottom: LazyColumn keeps the
 // visible row in place by its key, so otherwise the new one would land below the screen's edge. Reading higher up,
 // the place is kept. SideEffect runs before the list measures the change, while it is still where the user left it.
+// Only in the head, the chat's end: a page loaded below a window up in the history (or its loading row) stays below,
+// where the user scrolls to it. Pinned to that page's bottom instead, the user would stay at the edge with nothing
+// changing there, and no next page would be asked for.
 @Composable
 private fun FollowBottom(
     listState: LazyListState,
     bottomKey: String?,
+    isHead: Boolean,
 ) {
     val shownBottomKey = remember { arrayOfNulls<String>(1) }
+    // Whether the window shown before this change was the head: a page that just reached the end doesn't count.
+    val wasHead = remember { booleanArrayOf(isHead) }
     SideEffect {
         val isAtBottom = listState.firstVisibleItemIndex == 0 && listState.firstVisibleItemScrollOffset == 0
-        if (bottomKey != shownBottomKey[0] && isAtBottom) listState.requestScrollToItem(0)
+        if (bottomKey != shownBottomKey[0] && isAtBottom && wasHead[0]) listState.requestScrollToItem(0)
         shownBottomKey[0] = bottomKey
+        wasHead[0] = isHead
     }
 }
 
-// Asks for older or newer messages near an edge. Checked again when the number of messages or the flags change,
-// not only when the user reaches an edge: after a short load the user may still be at the edge, or hasNewer may
-// turn true while the user is at the bottom, and paging would stop. Messages are counted rather than rows: the
-// loading row comes and goes with every try, and offline that would repeat the tries forever.
+// Asks for older or newer messages near an edge. Checked again when the window's bounds or the flags change, not
+// only when the user reaches an edge: after a short load the user may still be at the edge, or hasNewer may turn
+// true while the user is at the bottom, and paging would stop. The bounds rather than the number of messages: a
+// window of 300 that moves by a page keeps its size. And not the rows: the loading row comes and goes with every
+// try, and offline that would repeat the tries forever.
 @Composable
 private fun ReachedEdges(
     listState: LazyListState,
@@ -253,7 +261,8 @@ private fun ReachedEdges(
             EdgeCheck(
                 isNearTop = total > 0 && top >= total - EDGE_THRESHOLD,
                 isNearBottom = total > 0 && bottom <= EDGE_THRESHOLD,
-                messageCount = currentState.messages.size,
+                newestSeq = currentState.messages.firstOrNull()?.seq,
+                oldestSeq = currentState.messages.lastOrNull()?.seq,
                 hasOlder = currentState.hasOlder,
                 hasNewer = currentState.hasNewer,
             )
@@ -350,7 +359,8 @@ internal sealed interface ChatRow {
 private data class EdgeCheck(
     val isNearTop: Boolean,
     val isNearBottom: Boolean,
-    val messageCount: Int,
+    val newestSeq: Long?,
+    val oldestSeq: Long?,
     val hasOlder: Boolean,
     val hasNewer: Boolean,
 )
