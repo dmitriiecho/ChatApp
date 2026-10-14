@@ -14,6 +14,13 @@ room3 {
     schemaDirectory("$projectDir/schemas")
 }
 
+// The tests read server/api-samples (apiSample): without this, an edited sample leaves them UP-TO-DATE and skipped.
+tasks.withType<Test>().configureEach {
+    inputs.dir(rootProject.layout.projectDirectory.dir("server/api-samples"))
+        .withPathSensitivity(PathSensitivity.RELATIVE)
+        .withPropertyName("apiSamples")
+}
+
 dependencies {
     implementation(project(":crossfeature:domain"))
     implementation(project(":core:network"))

@@ -27,6 +27,13 @@ kotlin {
     }
 }
 
+// The tests read server/api-samples (apiSample): without this, an edited sample leaves them UP-TO-DATE and skipped.
+tasks.withType<Test>().configureEach {
+    inputs.dir(rootProject.layout.projectDirectory.dir("server/api-samples"))
+        .withPathSensitivity(PathSensitivity.RELATIVE)
+        .withPropertyName("apiSamples")
+}
+
 dependencies {
     api(libs.ktor.client.core)
     api(libs.kotlinx.serialization.json)

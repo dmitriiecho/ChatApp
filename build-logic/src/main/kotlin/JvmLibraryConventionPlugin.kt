@@ -5,8 +5,8 @@ import org.gradle.kotlin.dsl.configure
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
 
-// A pure Kotlin module without Android (:crossfeature:domain, :crossfeature:data), on the same Java as the Android
-// modules.
+// A pure Kotlin module without Android (:crossfeature:domain, :core:mvi, :core:network), on the same Java as the
+// Android modules.
 class JvmLibraryConventionPlugin : Plugin<Project> {
     override fun apply(target: Project) {
         with(target) {

@@ -185,8 +185,7 @@ The DTOs are shared through `contract/`, so the field names can't drift apart, b
 
 `apiSample("bots.json")` reads a sample on either side, parsed with that side's own `Json`, and the check compares JSON trees, so field order doesn't matter, but a renamed, extra or missing field does. Changing a format or an address on one side fails that side's tests until the sample, and then the other side, are updated too.
 
-> [!NOTE]
-> The server's build declares the samples folder as an input of its tests, so editing a sample runs them again. The app's build doesn't yet: after editing a sample, run the app's tests with `--rerun-tasks`.
+Both builds declare the samples folder as an input of the tests that read it (the server's, and the app's in `:core:network` and `:crossfeature:data`), so editing a sample runs them again instead of leaving them up to date.
 
 ### Screenshots
 

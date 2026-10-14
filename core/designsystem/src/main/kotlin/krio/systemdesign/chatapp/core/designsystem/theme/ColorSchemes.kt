@@ -8,7 +8,7 @@ import androidx.compose.ui.graphics.Color
 // on every device. A warm one: cream surfaces and a coral accent. Every role the app uses is set, so none falls
 // back to Material's purple baseline.
 internal val LightColorScheme = lightColorScheme(
-    primary = Color(0xFFE8615A),
+    primary = Color(0xFFC4453F),
     onPrimary = Color(0xFFFFFFFF),
     primaryContainer = Color(0xFFFFDAD3),
     onPrimaryContainer = Color(0xFF3B0A06),
