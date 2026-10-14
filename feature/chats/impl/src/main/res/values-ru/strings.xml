@@ -1,0 +1,23 @@
+<resources>
+    <string name="chats_title">Чаты</string>
+    <string name="chats_empty">Чатов пока нет</string>
+    <string name="chats_no_messages">Сообщений пока нет</string>
+    <string name="chats_you">Вы: %1$s</string>
+    <string name="chats_message_deleted">Сообщение удалено</string>
+    <string name="chats_logout">Выйти</string>
+    <string name="chats_error">Не удалось загрузить чаты. Проверьте соединение.</string>
+    <string name="chats_bots">Боты</string>
+    <string name="chats_bots_hint">Пишут в чаты и отвечают вам</string>
+    <string name="chats_bots_error">Не удалось переключить ботов. Проверьте соединение.</string>
+    <string name="chat_no_messages">Сообщений пока нет. Напишите первым!</string>
+    <string name="chat_message_hint">Сообщение</string>
+    <string name="chat_send">Отправить</string>
+    <string name="chat_message_deleted">Сообщение удалено</string>
+    <string name="chat_edited">изменено %1$s</string>
+    <string name="chat_sending">Отправляется</string>
+    <string name="chat_not_sent">Не отправлено. Нажмите, чтобы повторить</string>
+    <string name="chat_new_messages">Новые сообщения</string>
+    <string name="chat_jump_to_latest">К последним сообщениям</string>
+    <string name="chat_jump_somewhere">К случайному сообщению</string>
+    <string name="chat_error">Нет соединения. Новые сообщения придут, когда оно появится.</string>
+</resources>

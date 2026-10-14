@@ -1,0 +1,23 @@
+<resources>
+    <string name="chats_title">Chats</string>
+    <string name="chats_empty">No chats yet</string>
+    <string name="chats_no_messages">No messages yet</string>
+    <string name="chats_you">You: %1$s</string>
+    <string name="chats_message_deleted">Message deleted</string>
+    <string name="chats_logout">Sign out</string>
+    <string name="chats_error">Couldn\'t load more chats. Check the connection.</string>
+    <string name="chats_bots">Bots</string>
+    <string name="chats_bots_hint">They write to chats and answer you</string>
+    <string name="chats_bots_error">Couldn\'t switch the bots. Check the connection.</string>
+    <string name="chat_no_messages">No messages yet. Say hi!</string>
+    <string name="chat_message_hint">Message</string>
+    <string name="chat_send">Send</string>
+    <string name="chat_message_deleted">Message deleted</string>
+    <string name="chat_edited">edited %1$s</string>
+    <string name="chat_sending">Sending</string>
+    <string name="chat_not_sent">Not sent. Tap to retry</string>
+    <string name="chat_new_messages">New messages</string>
+    <string name="chat_jump_to_latest">To the latest messages</string>
+    <string name="chat_jump_somewhere">To a random message</string>
+    <string name="chat_error">No connection. New messages will come when it\'s back.</string>
+</resources>
