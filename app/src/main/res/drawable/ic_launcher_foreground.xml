@@ -6,7 +6,7 @@
     android:viewportHeight="108">
     <!-- Two speech bubbles inside the adaptive icon's 66 dp safe zone. -->
     <path
-        android:fillColor="#FFC7E7FF"
+        android:fillColor="#FFFFDAD3"
         android:pathData="M70,46L76,46Q80,46 80,50L80,64Q80,68 76,68L74,68L74,75L66,68L54,68Q50,68 50,64L50,66L62,66Q70,66 70,58Z" />
     <path
         android:fillColor="#FFFFFFFF"
