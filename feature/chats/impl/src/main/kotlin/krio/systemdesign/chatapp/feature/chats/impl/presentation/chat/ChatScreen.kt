@@ -18,7 +18,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -44,6 +43,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import krio.systemdesign.chatapp.core.composeutils.effects.ObserveEffects
 import krio.systemdesign.chatapp.core.designsystem.components.bars.AppTopBar
+import krio.systemdesign.chatapp.core.designsystem.components.buttons.AccentSmallFab
 import krio.systemdesign.chatapp.core.designsystem.components.buttons.NavigateBackIconButton
 import krio.systemdesign.chatapp.core.designsystem.components.screenstates.EmptyState
 import krio.systemdesign.chatapp.core.designsystem.icons.AppIcons
@@ -145,14 +145,14 @@ internal fun ChatScreen(
                 Messages(rows = rows, state = state, onIntent = onIntent, listState = listState)
             }
             if (state.hasNewer) {
-                SmallFloatingActionButton(
+                AccentSmallFab(
+                    icon = AppIcons.ArrowDownward,
+                    contentDescription = stringResource(R.string.chat_jump_to_latest),
                     onClick = { onIntent(ChatIntent.JumpToLatest) },
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
                         .padding(Spacing.ScreenPadding),
-                ) {
-                    Icon(AppIcons.ArrowDownward, contentDescription = stringResource(R.string.chat_jump_to_latest))
-                }
+                )
             }
         }
     }
