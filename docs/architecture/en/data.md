@@ -91,6 +91,8 @@ abstract fun observeWindow(conversationId: String, fromSeq: Long, toSeq: Long?):
 - **Room re-reads the whole window on every change**, so it is kept to 300 messages. The excess is cut where the user isn't looking: at the bottom when scrolling up, at the top when scrolling down. What is cut stays in Room and comes back when the user scrolls there.
 - **Opening at a message** (`aroundSeq`: the first unread, or a jump from the toolbar button) loads a page around it, with gaps above and below that load as the user scrolls.
 
+Step by step, with the races between loads, in [Pagination](pagination.md#the-chat).
+
 &nbsp;
 
 ## The list's window
@@ -116,7 +118,7 @@ abstract fun observeLoaded(offset: Int, limit: Int): Flow<List<ConversationEntit
 - **Re-sorting happens in the query**: a new message raises a chat's `sortKey`, and Room re-reads the window.
 - **A chat deep down isn't kept** when only its change comes (from a sync or the socket): the page brings it fresh when the user scrolls there. A chat that rose to the top passes the boundary and shows.
 
-Paging 3 isn't used: the chat needs gaps, a head that grows by itself and opening at a seq, and `RemoteMediator` is built for a feed without gaps.
+How the list's window grows and moves is in [Pagination](pagination.md#the-chat-list). Paging 3 isn't used: the chat needs gaps, a head that grows by itself and opening at a seq, and `RemoteMediator` is built for a feed without gaps.
 
 &nbsp;
 

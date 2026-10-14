@@ -34,6 +34,7 @@ Each page can be read on its own:
 | [Navigation](navigation.md) | Navigation 3 keys and entries, the back stack that follows the session, a screen's own ViewModels |
 | [Screens](screens.md) | MVI on the project's own core: Store, Executor, Reducer, State, Effects, text fields, lists |
 | [Data](data.md) | "the network writes, the screens read", the windows over Room, versions, Room 3, the network |
+| [Pagination](pagination.md) | the windows over the cache on both screens: pages up and down, trims, opening at a message, jumps, races |
 | [Sync](sync.md) | the events socket, sync by token, pushes, the outbox, read marks, the bots switch |
 | [Build](build.md) | convention plugins, Koin's compiler plugin, the version catalog, code style, CI, signing |
 | [Testing](testing.md) | how tests are written, where test helpers live, kinds of tests, the contract with the server, screenshots |

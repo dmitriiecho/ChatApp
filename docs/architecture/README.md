@@ -1,6 +1,6 @@
 # ChatApp architecture
 
-How the app is built and why: modules, navigation, screens, data, sync and the build.
+How the app is built and why: modules, navigation, screens, data, pagination, sync and the build.
 
 | Language | |
 |---|---|
