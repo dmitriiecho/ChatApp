@@ -4,6 +4,9 @@
 
 [Русская версия](README.ru.md)
 
+> [!WARNING]
+> **Work in progress.** The app is still being built: `main` isn't a final version, things change from commit to commit, and some parts may be unfinished or rough.
+
 ChatApp is an example Android chat built on a modern stack, with its own server. You pick who you are and get a list of chats: with two other people, a group, and a couple of hundred bots that write on their own and answer you.
 
 &nbsp;
