@@ -115,11 +115,15 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 ```
 
+[`latest-build.yml`](../../../.github/workflows/latest-build.yml) builds the release APK after CI passes on a push to `main`, and publishes it as the `main-latest` release, which the README links. The APK needs the server's key: the workflow writes it into `local.properties` from the `CHATAPP_API_KEY` repo secret, and fails if the secret isn't set. Pull requests never reach this workflow, so their code never gets the key.
+
 &nbsp;
 
 ## Signing
 
-- **Release builds are signed with the debug key**, so they install on an emulator; publishing to a store would need a real key.
+The debug key is stored in the repo ([`build-logic/debug.keystore`](../../../build-logic/debug.keystore)), so a build from any computer, CI included, has the same signature, and a new APK installs over the previous one.
+
+- **Release builds are signed with the same key**, so they install on an emulator; publishing to a store would need a real key.
 - **R8 is enabled for release builds** and shrinks the code and resources.
 - **The server's key** comes from `chatapp.apiKey` in `local.properties`, which isn't in git. A build without it works, but the server answers 401.
 

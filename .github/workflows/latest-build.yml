@@ -1,0 +1,102 @@
+# Latest build: publishes the release APK of main as the GitHub release main-latest, so the README can link a
+# fresh build that anyone can download and install.
+#
+#   CI passes on a push to main → build the release APK with the server's key → replace the release
+#
+# It can also be started by hand from the Actions tab ("Run workflow").
+
+name: Latest build
+
+
+# ============================================================================
+# When it runs
+# ============================================================================
+
+on:
+  # After every finished run of the CI workflow on main; the job below keeps only the passed pushes.
+  # GitHub runs this trigger only from the copy of this file on main, so a change to it can't be tried in a PR.
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  # The "Run workflow" button in the Actions tab.
+  workflow_dispatch:
+
+# A newer build cancels one still going: only the newest commit matters.
+concurrency:
+  group: latest-build
+  cancel-in-progress: true
+
+# Unlike CI, this workflow writes to the repo: it creates and deletes the release and its tag.
+permissions:
+  contents: write
+
+
+jobs:
+  publish:
+    name: Publish
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # Only builds that passed CI, and only from pushes: CI also runs for pull requests, whose code must never
+    # get this job's write access or the server's key. By hand it always runs.
+    if: github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push')
+    # Which commit to build: after CI, the one its run checked; by hand, where the workflow was started.
+    env:
+      SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+    steps:
+
+      # --- Setup: the code, Java and Gradle ---------------------------------
+
+      # The commit CI checked, even if main has moved on since.
+      - name: Check out the code
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ env.SHA }}
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 21
+
+      # The same caching as in CI (ci.yml explains it).
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      # --- Build and publish ------------------------------------------------
+
+      # The app sends the server's key with every request (docs/architecture/en/data.md, "Network"); without it the
+      # server answers 401 and the APK can't sign in. It is a repo secret, written where a local build reads it.
+      # Anyone can take it out of the APK: it only keeps away the scanners that find the server's address.
+      - name: Add the server's key
+        env:
+          API_KEY: ${{ secrets.CHATAPP_API_KEY }}
+        run: |
+          if [ -z "$API_KEY" ]; then
+            echo "::error::The CHATAPP_API_KEY secret is not set: an APK without it can't reach the server."
+            exit 1
+          fi
+          echo "chatapp.apiKey=$API_KEY" >> local.properties
+
+      # A release build: R8 shrinks the code, the APK is signed with the debug key.
+      - name: Build the release APK
+        run: ./gradlew :app:assembleRelease
+
+      # gh is GitHub's command-line tool, preinstalled on the runner; it acts with this job's token.
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # A fixed file name keeps the download link in the README the same from build to build.
+          mkdir dist
+          cp app/build/outputs/apk/release/app-release.apk dist/ChatApp.apk
+          TAG="main-latest"
+
+          # The old release and its tag go first, so the tag moves to the new commit. The first time there is none.
+          gh release delete "$TAG" --cleanup-tag --yes || true
+          gh release create "$TAG" dist/ChatApp.apk \
+            --target "$SHA" \
+            --latest \
+            --title "main — latest build" \
+            --notes "Release build of \`main\` at ${SHA:0:7}, signed with the debug key."

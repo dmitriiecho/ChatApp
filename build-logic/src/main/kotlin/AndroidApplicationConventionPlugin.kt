@@ -19,6 +19,14 @@ class AndroidApplicationConventionPlugin : Plugin<Project> {
                 // settings. The language of the plain values folder is in src/main/res/resources.properties.
                 androidResources.generateLocaleConfig = true
 
+                // The debug key is kept in the repo, so a build from any computer, CI included, has the same
+                // signature, and a new APK installs over the previous one.
+                signingConfigs.getByName("debug") {
+                    storeFile = rootProject.file("build-logic/debug.keystore")
+                    storePassword = "android"
+                    keyAlias = "androiddebugkey"
+                    keyPassword = "android"
+                }
                 buildTypes.getByName("release") {
                     // A demo app: release is signed with the debug key so it installs on an emulator.
                     // Publishing to a store would need a real key.
