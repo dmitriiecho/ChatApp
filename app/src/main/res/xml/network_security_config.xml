@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!--
+        The server has no HTTPS (no domain), so plain HTTP is permitted for its address only, the events socket too.
+        The same address is in ServerConfig in core/network. Update both if it changes.
+    -->
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">2.56.204.151</domain>
+    </domain-config>
+</network-security-config>
