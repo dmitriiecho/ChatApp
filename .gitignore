@@ -1,0 +1,17 @@
+*.iml
+.gradle/
+local.properties
+.idea/
+.DS_Store
+build/
+/captures
+.externalNativeBuild
+.cxx/
+*.apk
+*.aab
+*.dex
+.kotlin/
+CLAUDE.local.md
+
+# A local run of the server (server/README.md): its database.
+server/chat.db*

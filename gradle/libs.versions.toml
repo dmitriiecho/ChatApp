@@ -1,0 +1,153 @@
+[versions]
+# Build
+agp = "9.4.1"
+# The newest the Koin compiler plugin is verified with: on a newer one it warns, which CI turns into an error.
+kotlin = "2.4.20"
+spotless = "8.10.4"
+ktlint = "1.8.0"
+moduleGraphAssert = "2.9.1"
+dependencyAnalysis = "3.19.2"
+# Kotlin Symbol Processing, for Room's code generation. KSP 2.3.x no longer follows the Kotlin version.
+ksp = "2.3.12"
+
+# AndroidX
+androidxCore = "1.19.1"
+activity = "1.13.0"
+lifecycle = "2.11.0"
+navigation3 = "1.2.0"
+composeBom = "2026.09.00"
+composeLints = "1.6.1"
+room3 = "3.0.3"
+work = "2.12.0"
+
+# DI
+koin = "4.2.2"
+koinCompilerPlugin = "1.2.1"
+
+# Kotlinx
+kotlinxCoroutines = "1.11.0"
+kotlinxSerialization = "1.11.0"
+
+# Network
+ktor = "3.6.0"
+# The version Ktor's OkHttp engine brings; declared because :core:network configures it.
+okhttp = "5.5.0"
+
+# Testing
+assertk = "0.28.1"
+turbine = "1.2.1"
+robolectric = "4.17"
+roborazzi = "1.76.0"
+composablePreviewScanner = "0.9.3"
+junit = "4.13.2"
+androidxTestCore = "1.7.0"
+
+[libraries]
+# AndroidX
+androidx-core = { group = "androidx.core", name = "core", version.ref = "androidxCore" }
+# Only as a version limit (build-logic, AndroidConfig.kt): its classes are in core now.
+androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "androidxCore" }
+androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activity" }
+androidx-lifecycle-runtime-compose = { group = "androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "lifecycle" }
+androidx-lifecycle-viewmodel-compose = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-compose", version.ref = "lifecycle" }
+androidx-lifecycle-viewmodel-navigation3 = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-navigation3", version.ref = "lifecycle" }
+androidx-navigation3-runtime = { group = "androidx.navigation3", name = "navigation3-runtime", version.ref = "navigation3" }
+androidx-navigation3-ui = { group = "androidx.navigation3", name = "navigation3-ui", version.ref = "navigation3" }
+# ProcessLifecycleOwner: the events socket is open only while the app is on screen.
+androidx-lifecycle-process = { group = "androidx.lifecycle", name = "lifecycle-process", version.ref = "lifecycle" }
+androidx-room3-runtime = { group = "androidx.room3", name = "room3-runtime", version.ref = "room3" }
+androidx-room3-compiler = { group = "androidx.room3", name = "room3-compiler", version.ref = "room3" }
+# Sends the outbox when the network is back, also after the app is closed.
+androidx-work-runtime = { group = "androidx.work", name = "work-runtime", version.ref = "work" }
+
+# DI. Versions come from the BOM.
+koin-bom = { group = "io.insert-koin", name = "koin-bom", version.ref = "koin" }
+koin-core = { group = "io.insert-koin", name = "koin-core" }
+koin-annotations = { group = "io.insert-koin", name = "koin-annotations" }
+koin-android = { group = "io.insert-koin", name = "koin-android" }
+# @KoinViewModel and koinViewModel() in Compose.
+koin-core-viewmodel = { group = "io.insert-koin", name = "koin-core-viewmodel" }
+koin-compose-viewmodel = { group = "io.insert-koin", name = "koin-compose-viewmodel" }
+# Workers get their dependencies from Koin (@KoinWorker).
+koin-androidx-workmanager = { group = "io.insert-koin", name = "koin-androidx-workmanager" }
+
+# Kotlinx
+kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "kotlinxCoroutines" }
+kotlinx-serialization-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-core", version.ref = "kotlinxSerialization" }
+kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
+
+# Network
+# The API formats shared with the server: the included build contract/, so no version.
+chatapp-contract = { group = "krio.systemdesign.chatapp", name = "contract" }
+ktor-client-core = { group = "io.ktor", name = "ktor-client-core", version.ref = "ktor" }
+ktor-client-okhttp = { group = "io.ktor", name = "ktor-client-okhttp", version.ref = "ktor" }
+ktor-client-content-negotiation = { group = "io.ktor", name = "ktor-client-content-negotiation", version.ref = "ktor" }
+ktor-client-websockets = { group = "io.ktor", name = "ktor-client-websockets", version.ref = "ktor" }
+ktor-serialization-kotlinx-json = { group = "io.ktor", name = "ktor-serialization-kotlinx-json", version.ref = "ktor" }
+ktor-client-mock = { group = "io.ktor", name = "ktor-client-mock", version.ref = "ktor" }
+okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
+
+# Testing
+# kotlin.test annotations on the JUnit4 runner: Robolectric runs only on JUnit4.
+kotlin-test-junit = { group = "org.jetbrains.kotlin", name = "kotlin-test-junit", version.ref = "kotlin" }
+assertk = { group = "com.willowtreeapps.assertk", name = "assertk", version.ref = "assertk" }
+kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "kotlinxCoroutines" }
+turbine = { group = "app.cash.turbine", name = "turbine", version.ref = "turbine" }
+robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "robolectric" }
+# ApplicationProvider: the Context for a Room database in a Robolectric test.
+androidx-test-core = { group = "androidx.test", name = "core", version.ref = "androidxTestCore" }
+androidx-work-testing = { group = "androidx.work", name = "work-testing", version.ref = "work" }
+# Screenshot tests generated from the @Preview functions (chatapp.android.screenshots).
+# The generated tests are plain JUnit4, and Roborazzi checks that junit:junit is declared.
+junit = { group = "junit", name = "junit", version.ref = "junit" }
+roborazzi-compose-preview-scanner-support = { group = "io.github.takahirom.roborazzi", name = "roborazzi-compose-preview-scanner-support", version.ref = "roborazzi" }
+composable-preview-scanner = { group = "io.github.sergio-sastre.ComposablePreviewScanner", name = "android", version.ref = "composablePreviewScanner" }
+androidx-compose-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
+androidx-compose-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
+
+# Added to modules by the build-logic convention plugins. The IDE doesn't look there
+# and marks these as unused, but they are used: don't delete them.
+# Compose versions come from the BOM.
+androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
+androidx-compose-ui = { group = "androidx.compose.ui", name = "ui" }
+androidx-compose-runtime = { group = "androidx.compose.runtime", name = "runtime" }
+androidx-compose-foundation = { group = "androidx.compose.foundation", name = "foundation" }
+androidx-compose-ui-graphics = { group = "androidx.compose.ui", name = "ui-graphics" }
+androidx-compose-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
+androidx-compose-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
+androidx-compose-material3 = { group = "androidx.compose.material3", name = "material3" }
+# Slack's lint rules for Compose: modifier parameters, private previews, remember and the like.
+compose-lint-checks = { group = "com.slack.lint.compose", name = "compose-lint-checks", version.ref = "composeLints" }
+
+# For build-logic: AGP and Kotlin types the convention plugins use to configure the android and kotlin blocks
+android-gradlePlugin = { group = "com.android.tools.build", name = "gradle", version.ref = "agp" }
+kotlin-gradlePlugin = { group = "org.jetbrains.kotlin", name = "kotlin-gradle-plugin", version.ref = "kotlin" }
+# For build-logic: the types of Koin's compiler plugin settings (KoinConventionPlugin)
+koin-compiler-gradlePlugin = { group = "io.insert-koin", name = "koin-compiler-gradle-plugin", version.ref = "koinCompilerPlugin" }
+# For build-logic: the types of the screenshot tests' settings
+roborazzi-gradlePlugin = { group = "io.github.takahirom.roborazzi", name = "roborazzi-gradle-plugin", version.ref = "roborazzi" }
+# For build-logic: the types for the module rules (ModuleGraphRules.kt)
+module-graph-assertion-gradlePlugin = { group = "com.jraska.module.graph.assertion", name = "plugin", version.ref = "moduleGraphAssert" }
+
+[plugins]
+android-application = { id = "com.android.application", version.ref = "agp" }
+android-library = { id = "com.android.library", version.ref = "agp" }
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+koin-compiler = { id = "io.insert-koin.compiler.plugin", version.ref = "koinCompilerPlugin" }
+spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }
+module-graph-assertion = { id = "com.jraska.module.graph.assertion", version.ref = "moduleGraphAssert" }
+dependency-analysis = { id = "com.autonomousapps.dependency-analysis", version.ref = "dependencyAnalysis" }
+roborazzi = { id = "io.github.takahirom.roborazzi", version.ref = "roborazzi" }
+ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+androidx-room3 = { id = "androidx.room3", version.ref = "room3" }
+
+# Project convention plugins from build-logic
+chatapp-android-application = { id = "chatapp.android.application" }
+chatapp-android-library = { id = "chatapp.android.library" }
+chatapp-android-compose = { id = "chatapp.android.compose" }
+chatapp-android-feature = { id = "chatapp.android.feature" }
+chatapp-android-screenshots = { id = "chatapp.android.screenshots" }
+chatapp-jvm-library = { id = "chatapp.jvm.library" }
+chatapp-koin = { id = "chatapp.koin" }

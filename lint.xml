@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Android lint settings for every module: lint looks for lint.xml from a module up to this root. -->
+<lint>
+    <!-- "A newer version is available": still in the report as a hint, but not a warning, which CI turns into an
+         error. Otherwise any library's release would fail CI with no change in the project. -->
+    <issue id="GradleDependency" severity="informational" />
+    <issue id="AndroidGradlePluginVersion" severity="informational" />
+    <issue id="NewerVersionAvailable" severity="informational" />
+    <!-- LocalDarkTheme is part of ChatAppTheme, like Material's own locals. Passed down as a parameter instead, it
+         would go stale: Navigation 3 keeps each entry's content until the back stack changes. -->
+    <issue id="ComposeCompositionLocalUsage">
+        <option name="allowed-composition-locals" value="LocalDarkTheme" />
+    </issue>
+</lint>
