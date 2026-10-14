@@ -1,0 +1,5 @@
+<resources>
+    <string name="login_title">Кто вы?</string>
+    <string name="login_error">Не удалось загрузить пользователей. Проверьте соединение.</string>
+    <string name="login_retry">Повторить</string>
+</resources>
