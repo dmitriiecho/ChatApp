@@ -1,0 +1,5 @@
+<resources>
+    <string name="designsystem_navigate_back">Назад</string>
+    <string name="designsystem_switch_to_light_theme">Включить светлую тему</string>
+    <string name="designsystem_switch_to_dark_theme">Включить тёмную тему</string>
+</resources>
