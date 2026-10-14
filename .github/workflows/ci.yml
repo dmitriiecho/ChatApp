@@ -1,0 +1,182 @@
+# CI: checks every pull request and every push to main.
+#
+#   code style → module rules → unused dependencies → lint → unit tests → the app builds
+#
+# The server is a separate Gradle build (server/), so it gets a job of its own.
+#
+# The steps run on a fresh virtual machine (a "runner").
+
+name: CI
+
+
+# ============================================================================
+# When it runs
+# ============================================================================
+
+on:
+  pull_request:
+    # A change only to docs builds nothing, so it doesn't start a run.
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+  push:
+    branches: [main]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+
+# Runs in the same group don't overlap. A new push to a pull request cancels its run that is still going;
+# runs on pushes to main always finish.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+# The token the job gets may only read the repo: the checks change nothing.
+permissions:
+  contents: read
+
+
+jobs:
+
+  android:
+    name: Android
+    runs-on: ubuntu-latest
+    # A hung run would otherwise hold the runner for GitHub's default 6 hours.
+    timeout-minutes: 30
+    # Gradle reads ORG_GRADLE_PROJECT_<name> as the property <name>: here -PwarningsAsErrors=true.
+    # With it, Kotlin and lint warnings fail the build, so they don't pile up (build-logic, WarningsAsErrors.kt).
+    env:
+      ORG_GRADLE_PROJECT_warningsAsErrors: true
+
+    steps:
+
+      # --- Setup: the code, Java and Gradle ---------------------------------
+
+      - name: Check out the code
+        uses: actions/checkout@v7
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 21
+
+      # Caches Gradle and the downloaded libraries between runs, and checks that gradle-wrapper.jar is genuine.
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      # Robolectric downloads the Android it runs tests on (about 200 MB) into ~/.m2, outside Gradle's cache.
+      # Which Android it is depends on the Robolectric version and the targetSdk, so the key follows those files.
+      - name: Cache Robolectric's Android
+        uses: actions/cache@v6
+        with:
+          path: ~/.m2/repository/org/robolectric
+          key: robolectric-${{ hashFiles('gradle/libs.versions.toml', 'build-logic/src/main/kotlin/AndroidConfig.kt') }}
+
+      # --- Checks -----------------------------------------------------------
+      # By default a failed step skips all the steps after it. `if: !cancelled()` runs a check anyway
+      # (unless the whole run was cancelled), so one run shows every problem at once.
+
+      - name: Code style (ktlint)
+        run: ./gradlew spotlessCheck
+
+      # The allowed dependencies between modules are in build-logic/src/main/kotlin/ModuleGraphRules.kt.
+      - name: Dependencies between modules (assertModuleGraph)
+        if: ${{ !cancelled() }}
+        run: ./gradlew assertModuleGraph
+
+      # Unused dependencies and module structure; the rules are in the root build.gradle.kts.
+      - name: Unused dependencies (buildHealth)
+        if: ${{ !cancelled() }}
+        run: ./gradlew buildHealth
+
+      # Android's own rules plus Slack's Compose rules; exceptions are in the root lint.xml.
+      - name: Problems in code and resources (Android lint)
+        if: ${{ !cancelled() }}
+        run: ./gradlew lintDebug
+
+      # Every module's tests, on debug: logic, ViewModels, and the screenshots of every @Preview compared with
+      # the saved images.
+      # --continue: a failed module doesn't stop the others, so the report shows every failing test.
+      - name: Behaviour (unit tests)
+        id: tests
+        if: ${{ !cancelled() }}
+        run: ./gradlew test --continue
+
+      # Shows each failed test, with its message and line, at the top of the run's page.
+      # annotate_only: no check run of its own, which would need a token that can write.
+      - name: Failed tests
+        if: ${{ failure() && steps.tests.outcome == 'failure' }}
+        uses: mikepenz/action-junit-report@v6
+        with:
+          report_paths: '**/build/test-results/**/*.xml'
+          check_name: Android tests
+          annotate_only: true
+          detailed_summary: true
+          failed_summary_logs: true
+
+      # A changed screenshot can't be shown in the summary: its saved image, the new one and the difference,
+      # side by side, are attached to the run for a week.
+      - name: Changed screenshots
+        if: ${{ failure() && steps.tests.outcome == 'failure' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: changed-screenshots
+          path: '**/build/outputs/roborazzi/*_compare.png'
+          if-no-files-found: ignore
+          retention-days: 7
+
+      # The app's Koin graph is checked here too: the compiler plugin fails the build on a missing dependency.
+      - name: The app compiles (assembleDebug)
+        if: ${{ !cancelled() }}
+        run: ./gradlew :app:assembleDebug
+
+  # ==========================================================================
+  # Server: the Ktor backend in server/
+  # ==========================================================================
+
+  server:
+    name: Server
+    runs-on: ubuntu-latest
+    # A normal run takes a minute or two.
+    timeout-minutes: 15
+    # Warnings fail the build here too (server/build.gradle.kts).
+    env:
+      ORG_GRADLE_PROJECT_warningsAsErrors: true
+    # Every `run:` command of this job starts in server/, where its own Gradle wrapper is.
+    defaults:
+      run:
+        working-directory: server
+
+    steps:
+
+      - name: Check out the code
+        uses: actions/checkout@v7
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Code style (ktlint)
+        run: ./gradlew spotlessCheck
+
+      # Includes the API samples in server/api-samples, which the app's tests read too.
+      - name: API (tests)
+        id: tests
+        if: ${{ !cancelled() }}
+        run: ./gradlew test
+
+      - name: Failed tests
+        if: ${{ failure() && steps.tests.outcome == 'failure' }}
+        uses: mikepenz/action-junit-report@v6
+        with:
+          report_paths: 'server/build/test-results/test/*.xml'
+          check_name: Server tests
+          annotate_only: true
+          detailed_summary: true
+          failed_summary_logs: true
