@@ -2,9 +2,9 @@
 
 [Русская версия](../ru/README.md)
 
-ChatApp is a demo chat for Android with its own server: you pick who you are, and get a list of chats with bots that write on their own and answer you. It works offline: the chats open from the cache, a message written without a network is sent when it comes back, and what was missed catches up by itself. A Ktor server in [`server/`](../../../server/README.md) keeps the chats and sends the events.
+ChatApp is a demo chat app for Android with its own server: you pick a user to sign in as and get a list of chats with bots that write on their own and reply to you. It works offline: chats open from the cache, a message written without a network is sent once the network is back, and whatever was missed arrives by itself. A Ktor server in [`server/`](../../../server/README.md) keeps the chats and sends the events.
 
-These pages explain how the app is built and why. Each one covers the rules, the reasons behind them and short excerpts from the project's code.
+These pages explain how the app is built and why. Each one gives the rules, the reasons behind them and short excerpts from the project's code.
 
 &nbsp;
 
@@ -31,10 +31,10 @@ Each page can be read on its own:
 | Page | What it covers |
 |---|---|
 | [Modules](modules.md) | the levels, where new code goes, what a feature exposes, Koin modules, the module graph check |
-| [Navigation](navigation.md) | Navigation 3 keys and entries, the back stack that follows the session, a screen's own ViewModels |
+| [Navigation](navigation.md) | Navigation 3 keys and entries, the back stack that follows the session, each screen's own ViewModels |
 | [Screens](screens.md) | MVI on the project's own core: Store, Executor, Reducer, State, Effects, text fields, lists |
-| [Data](data.md) | "the network writes, the screens read", the windows over Room, versions, Room 3, the network |
-| [Pagination](pagination.md) | the windows over the cache on both screens: pages up and down, trims, opening at a message, jumps, races |
+| [Data](data.md) | "the network writes, the screens read", the windows into Room, versions, Room 3, the network |
+| [Pagination](pagination.md) | the windows into the cache on both screens: pages up and down, trimming, opening at a message, jumps, races |
 | [Sync](sync.md) | the events socket, sync by token, pushes, the outbox, read marks, the bots switch |
 | [Build](build.md) | convention plugins, Koin's compiler plugin, the version catalog, code style, CI, signing |
 | [Testing](testing.md) | how tests are written, where test helpers live, kinds of tests, the contract with the server, screenshots |
@@ -43,7 +43,7 @@ Each page can be read on its own:
 
 ## Stack
 
-The main libraries and tools; all of the app's libraries also work in Kotlin Multiplatform, so the code can move there later:
+The main libraries and tools. All of the app's libraries also work in Kotlin Multiplatform, so the code can move there later:
 
 | Area | Choice |
 |---|---|

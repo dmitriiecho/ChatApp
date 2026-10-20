@@ -17,7 +17,7 @@ Each level has its own modules and its own purpose:
 | `feature/` | `login`, `chats` | one feature each; its screens live in `impl` |
 | `app/` | `:app` | the application: it starts Koin, holds the navigation host and runs the background work; nothing depends on it |
 
-The levels are folders, not just dependency rules: a glance at the tree shows which code knows about chats. There are no catch-all modules like `:core:common` that every feature ends up editing.
+The levels are folders, not just dependency rules: one look at the tree shows which code knows about chats. There are no catch-all modules like `:core:common` that every feature ends up editing.
 
 Next to the app's modules there are three separate Gradle builds:
 
@@ -47,7 +47,7 @@ Styled components follow the same rule:
 | knows chat words (chat, message, contact) and is used by two or more features | `:crossfeature:ui` |
 | knows chat words and is used by only one feature | `:feature:<name>:ui` |
 
-Features don't style Material components themselves. The unread counter is an example: Material's `Badge` is red by default, which reads as an error, so the accent-coloured `CountBadge` lives in `:core:designsystem`, and the chat list only places it.
+Features don't style Material components themselves. Take the unread counter: Material's `Badge` is red by default, which looks like an error, so the accent-coloured `CountBadge` lives in `:core:designsystem`, and the chat list only places it.
 
 &nbsp;
 
@@ -72,7 +72,7 @@ dependencies {
 }
 ```
 
-- **A `ui` module appears when a feature has chat components of its own** that no other feature uses. Neither feature has one yet: their components are sections of a screen and live in its `components/` folder.
+- **A `ui` module appears when a feature has chat components of its own** that no other feature uses. Neither feature has one yet: their components are sections of a screen and live in that screen's `components/` folder.
 - **There is no `api` module.** Features never depend on each other, so only the app needs a feature's API, and it connects the features through callbacks (see [Navigation](navigation.md)).
 - **Only `:app` depends on `:crossfeature:data`.** Features see repository interfaces from `:crossfeature:domain`; Koin provides the implementations.
 
@@ -80,7 +80,7 @@ dependencies {
 
 ## What a feature exposes
 
-In an `impl` module, only what the app wires up is public, and all of it lives in `presentation/navigation`, plus the module's Koin module in `di/`. Everything else — screens, ViewModels, Executors, use cases — is `internal`:
+In an `impl` module, only what the app wires up is public: the navigation in `presentation/navigation` and the Koin module in `di/`. Everything else — screens, ViewModels, Executors, use cases — is `internal`:
 
 ```kotlin
 object ChatsRoutes {
@@ -147,4 +147,4 @@ Any dependency that no rule allows fails the build:
 [':feature:chats:impl' -> ':crossfeature:data'] not allowed by any of [...]
 ```
 
-Adding a new kind of dependency between modules is a deliberate decision: it needs a new rule in that file, and the rule shows up in the diff.
+A new kind of dependency between modules is a deliberate decision: it needs a new rule in that file, and the rule shows up in the diff.

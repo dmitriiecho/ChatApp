@@ -43,7 +43,7 @@ fun `while the server hasn't answered, the switch shows the user's choice`() {
 - **A test's data lives in the test.** Builders with defaults (`conversation("c", unreadCount = 2)`, `messageDto("c", 3)`) let a test set only the values that matter to it.
 - **Working stand-ins instead of mocks.** Repositories are interfaces, so a test uses an in-memory implementation with real behaviour; there is no mocking library.
 - **No real time**: coroutine tests run on `runTest` with its virtual clock.
-- **Every new test is seen failing at least once**: break the code it checks, watch the test fail, then restore the code.
+- **Every new test must be seen failing at least once**: break the code it checks, watch the test fail, then restore the code.
 
 &nbsp;
 
@@ -74,7 +74,7 @@ A helper used by the tests of **two or more modules** lives in the **test fixtur
 
 | Tool | For |
 |---|---|
-| `kotlin.test` | `@Test` and the other annotations; the runner under it is JUnit4 in the app (Robolectric works only with it) and JUnit5 on the server |
+| `kotlin.test` | `@Test` and the other annotations; underneath, the runner is JUnit4 in the app (Robolectric works only with it) and JUnit5 on the server |
 | [AssertK](https://github.com/assertk-org/assertk) | every check: `assertThat(actual).isEqualTo(expected)`, `isInstanceOf<T>()`, `assertFailure {}` |
 | `kotlinx-coroutines-test` | `runTest` and the virtual clock |
 | [Turbine](https://github.com/cashapp/turbine) | a screen's one-off Effects: `effects.test { awaitItem() }` |
@@ -134,7 +134,7 @@ fun `offline the bots switch goes back and a snackbar says why`() = viewModelTes
 
 ### Reducer
 
-A Reducer is a pure function, so its test has no coroutines at all: it folds a few Mutations and checks the State (see the example [above](#how-a-test-is-written)).
+A Reducer is a pure function, so its test has no coroutines at all: it applies a few Mutations in turn and checks the State (see the example [above](#how-a-test-is-written)).
 
 ### Data
 
@@ -159,11 +159,11 @@ class RealtimeHandlerTest {
 
 - **The DAO tests** check the windows on real SQL: a window never steps over a gap, the head grows by itself, an older version doesn't overwrite a newer one.
 - **The sync and outbox tests** queue the server's answers and check what ends up in Room: batches, `resetRequired`, a resend after a failure, the gap loaded before a sent message.
-- **The test closes the data layer's scope before the database**: a collector still reading a closed database would throw.
+- **The test closes the data layer's scope before the database**: a collector still reading from a closed database would throw.
 
 ### Network
 
-`networkTest {}` gives the test a `TestServer` and a client with the app's settings ([`serverApi`](../../../core/network/src/main/kotlin/krio/systemdesign/chatapp/core/network/NetworkJson.kt)), so it reads JSON with the same `networkJson`. `TestServer` answers with the queued responses and records the requests; it runs on Ktor's `MockEngine`:
+`networkTest {}` gives the test a `TestServer` and a client with the app's settings ([`serverApi`](../../../core/network/src/main/kotlin/krio/systemdesign/chatapp/core/network/NetworkJson.kt)), so it reads JSON with the same `networkJson`. `TestServer` answers with responses queued in advance and records the requests; it runs on Ktor's `MockEngine`:
 
 ```kotlin
 @Test
@@ -183,20 +183,20 @@ The DTOs are shared through `contract/`, so the field names can't drift apart, b
 | Server | it accepts the request samples at their addresses and answers exactly like the response samples, events included |
 | App | it sends requests exactly like the request samples, to their addresses, and reads the response samples |
 
-`apiSample("bots.json")` reads a sample on either side, parsed with that side's own `Json`, and the check compares JSON trees, so field order doesn't matter, but a renamed, extra or missing field does. Changing a format or an address on one side fails that side's tests until the sample, and then the other side, are updated too.
+`apiSample("bots.json")` reads a sample on either side, parsed with that side's own `Json`, and the check compares JSON trees: field order doesn't matter, but a renamed, extra or missing field does. Changing a format or an address on one side fails that side's tests until the sample is updated, and then the other side has to follow.
 
-Both builds declare the samples folder as an input of the tests that read it (the server's, and the app's in `:core:network` and `:crossfeature:data`), so editing a sample runs them again instead of leaving them up to date.
+Both builds declare the samples folder as an input of the tests that read it (the server's, and the app's in `:core:network` and `:crossfeature:data`), so after a sample is edited, Gradle runs them again instead of treating them as up to date.
 
 ### Screenshots
 
-Every `@Preview` is a screenshot test, so nobody has to write them by hand. `chatapp.android.screenshots` has Roborazzi render each preview on Robolectric and compare it with the image saved in the module's `screenshots/` folder:
+Every `@Preview` is a screenshot test, so nobody has to write these tests by hand. `chatapp.android.screenshots` has Roborazzi render each preview on Robolectric and compare it with the image saved in the module's `screenshots/` folder:
 
 | Command | Does |
 |---|---|
 | `./gradlew test` | compares every preview with its saved image and fails if they differ |
 | `./gradlew recordRoborazziDebug -Proborazzi.cleanupOldScreenshots=true` | renders the previews and saves them as the new images; deletes the images of previews that no longer exist |
 
-These tests don't tell you whether a screen looks right; they catch changes nobody asked for. That's why images are recorded only by a person, deliberately, after a UI change:
+These tests don't tell you whether a screen looks right; they catch changes nobody asked for. That's why images are recorded only by a person, on purpose, after a UI change:
 
 1. Change the UI.
 2. Run `./gradlew test`. Only the previews you meant to change should fail, and each one's `build/outputs/roborazzi/…_compare.png` shows the old image, the difference in red and the new one.
@@ -208,9 +208,9 @@ These tests don't tell you whether a screen looks right; they catch changes nobo
 
 - **The clock is paused**: `PausedClockPreviewTester` renders every preview at its first frame, so an endless animation (a spinner) doesn't hang the test.
 - **Times are in UTC** in every screenshot test, so an image recorded on one machine matches on CI.
-- **Old images are deleted only when recording**, through that flag: Roborazzi deletes every image the run didn't render, so with the flag always on, running a single test would delete all the module's other images.
-- **Private previews count too**: Slack's lint rules require previews to be private, and the plugin includes them.
+- **Old images are deleted only when recording**, with that flag: Roborazzi deletes every image the run didn't render, so if the flag were always on, running a single test would delete all the module's other images.
+- **Private previews are included too**: Slack's lint rules require previews to be private, and the plugin picks them up.
 
 ### Server
 
-`serverTest {}` starts the server in memory with Ktor's `testApplication`, on an in-memory SQLite with the test's own data (`TestData`: users and chats put straight into the tables), a clock that stands still, and a client that signs every request as Anna with the test key. A request from the samples is sent with `sendApiRequest("set-bots")`, which fails on any status other than success. The bots get their own tests with a fixed random seed and no pauses. More on the server's API is in [`server/README.md`](../../../server/README.md).
+`serverTest {}` starts the server in memory with Ktor's `testApplication`, on an in-memory SQLite with the test's own data (`TestData`: users and chats put straight into the tables), a stopped clock, and a client that sends every request as Anna with the test key. A request from the samples is sent with `sendApiRequest("set-bots")`, which fails on any non-success status. The bots get their own tests with a fixed random seed and no pauses. More on the server's API is in [`server/README.md`](../../../server/README.md).

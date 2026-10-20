@@ -7,13 +7,13 @@
 > [!WARNING]
 > **Work in progress.** The app is still being built: `main` isn't a final version, things change from commit to commit, and some parts may be unfinished or rough.
 
-ChatApp is an example Android chat built on a modern stack, with its own server. You pick who you are and get a list of chats: with two other people, a group, and a couple of hundred bots that write on their own and answer you.
+ChatApp is a sample Android chat app built on a modern stack, with its own server. You pick a user to sign in as and get a list of chats: with two other people, a group, and a couple of hundred bots that write on their own and reply to you.
 
 &nbsp;
 
 ## How it looks
 
-Signing in as Max, scrolling the chat list, opening a chat with a bot, writing to it and getting an answer:
+Signing in as Max, scrolling the chat list, opening a chat with a bot, writing to it and getting a reply:
 
 <p>
   <img src=".github/readme/flow.webp" width="240" alt="Signing in as Max, scrolling the chat list, opening a chat with Liam 6, sending Hi! Are you there? and getting the answer Hi! How are you?">
@@ -25,13 +25,13 @@ Signing in as Max, scrolling the chat list, opening a chat with a bot, writing t
 
 The app is small, but most of what a real messenger needs is there:
 
-- **Offline first**: the screens read only the cache in Room. A chat opened before opens without a network, and new messages come when it is back.
-- **Live updates** over a WebSocket: new messages, edits and deletions, chats rising to the top of the list, reads on another device.
-- **Catching up by token**: after the app was in the background or offline, it asks the server only for what changed since then.
-- **Sending through an outbox**: a message shows at once and is sent by WorkManager when there is a network, in order and never twice, also after the app is closed.
-- **Long chats and long lists**: windows over the cache that load pages up and down, open at the first unread message and never hold more than a few hundred items. A button in a chat's top bar jumps to a random message of its history to try it.
-- **Read marks** with a "New messages" divider and unread counters that follow every device.
-- **Bots** that write every 10–30 seconds, and a switch under the chat list that turns them off for everyone.
+- **Offline first**: the screens read only the cache in Room. A chat you have opened before also opens without a network, and new messages arrive once it is back.
+- **Live updates** over a WebSocket: new messages, edits and deletions, chats moving to the top of the list, messages read on another device.
+- **Catching up after a break**: after the app has been in the background or offline, it asks the server only for what has changed since then.
+- **Sending through an outbox**: a message shows up at once, and WorkManager sends it when there is a network: in order, never twice, even after the app is closed.
+- **Long chats and long lists**: the screens show a window of the cache that loads pages up and down, opens at the first unread message and never holds more than a few hundred items. To try it, a button in a chat's top bar jumps to a random message in its history.
+- **Read marks**, with a "New messages" divider and unread counters that stay in step across all of the user's devices.
+- **Bots** that write every 10–30 seconds, and a switch below the chat list that turns them off for everyone.
 - **A light and a dark theme**, switched from the chat list.
 
 &nbsp;
@@ -48,7 +48,7 @@ core/          designsystem, compose-utils,       knows nothing about chats
                mvi, network
 ```
 
-Screens run on MVI on a small core of the project's own, DI is Koin with its compiler plugin, navigation is Navigation 3. How modules, navigation, screens, data, sync and the build work is explained in the [architecture docs](docs/architecture/en/README.md).
+The screens use MVI on a small core written for the project, DI is Koin with its compiler plugin, and navigation is Navigation 3. How modules, navigation, screens, data, sync and the build work is explained in the [architecture docs](docs/architecture/en/README.md).
 
 &nbsp;
 
@@ -61,7 +61,7 @@ Screens run on MVI on a small core of the project's own, DI is Koin with its com
 
 ## Running
 
-The easiest way is to download the [APK from `main`](https://github.com/dmitriiecho/ChatApp/releases/download/main-latest/ChatApp.apk). It is a release build for Android 8.0 and newer, rebuilt by CI after every code change to `main`.
+The easiest way is to download the [APK from `main`](https://github.com/dmitriiecho/ChatApp/releases/download/main-latest/ChatApp.apk). It is a release build for Android 8.0 and newer, and CI rebuilds it after every code change in `main`.
 
 To build the app yourself, you need JDK 21, the Android SDK and the server's key:
 
@@ -80,7 +80,7 @@ Without the key the app builds and starts, but the server answers 401 and the si
 
 ## Server
 
-The chats, messages and events are served by a Ktor server with SQLite in [`server/`](server/README.md). It is deployed at `http://2.56.204.151:8081/`, and both debug and release builds use it.
+Chats, messages and events come from a Ktor server with SQLite, in [`server/`](server/README.md). It runs at `http://2.56.204.151:8081/`, and both debug and release builds use it.
 
 &nbsp;
 
@@ -90,4 +90,4 @@ The app is built with the AI agents Claude Code, Cursor and Grok Build, running 
 
 - **The rules are written down for the agents**: [CLAUDE.md](CLAUDE.md) describes the module layout, the code style and the conventions for screens and data.
 - **Changes are made in small steps**, and each one is discussed and checked before it is committed.
-- **Behaviour is checked by tests and CI** (see [above](#tests-and-ci)), and every change is also tried out on an emulator.
+- **Behaviour is checked by tests and CI** (see [above](#tests-and-ci)), and every change is also tried on an emulator.

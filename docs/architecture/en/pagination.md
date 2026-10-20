@@ -2,7 +2,7 @@
 
 [Русская версия](../ru/pagination.md) · [All pages](README.md)
 
-Both screens show long lists: a user has more than 200 chats, and a chat may have thousands of messages. Neither screen ever holds all of them. Each one watches a **window** over the cache in Room, and a **paginator** in its Executor moves the window as the user scrolls. The network is asked only when the cache doesn't have what the window moves onto.
+Both screens show long lists: a user has more than 200 chats, and a chat may have thousands of messages. Neither screen ever holds all of them. Each one watches a **window** into the cache in Room, and a **paginator** in its Executor moves the window as the user scrolls. It goes to the network only when the cache doesn't have what the window moves onto.
 
 &nbsp;
 
@@ -18,11 +18,11 @@ The two windows differ in shape, because the two lists differ in what they are o
 | The most in the window | 150 chats | 300 messages |
 | Opens | at the top | at the first unread message, or at the newest |
 | New items appear | at the top, as chats rise | at the bottom, as messages come |
-| Gaps in the cache | never: chats are loaded from the top down | yes: a chat opened at its first unread message has a piece in the middle |
+| Gaps in the cache | never: chats are loaded from the top down | yes: a chat opened at its first unread message has only a piece from the middle |
 | Paginator | `ConversationsPaginator` | `ChatPaginator` |
 | Repository | `ConversationsRepository` | `MessagesRepository` |
 
-Why a window at all: Room re-reads a query on every change of the tables it reads. A chat with bots changes several times a minute, and re-reading thousands of rows each time would be wasted work. A window keeps every re-read to at most a few hundred rows, however far the user scrolls; what leaves the window stays in Room and comes back at once.
+Why a window at all? Room re-runs a query on every change to the tables it reads. A chat with bots changes several times a minute, and re-reading thousands of rows each time would be wasted work. A window keeps every re-read to a few hundred rows at most, however far the user scrolls; what leaves the window stays in Room and comes back instantly.
 
 &nbsp;
 
@@ -39,11 +39,11 @@ The screen doesn't load anything itself. It watches where the user is and sends 
 ```
 
 - **"Near" is 10 items** from the edge (`EDGE_THRESHOLD`), so the next page comes before the user reaches the end.
-- **The check runs again when the window or the flags change**, not only when the user scrolls. After a short page the user may still be at the edge, and without this the list would stop. The chat list watches the number of its chats, the chat the bounds of its window (the newest and the oldest message): a chat window of 300 that moves by a page keeps its size, and counting would miss the move.
-- **Items, not rows.** The loading row at the end comes and goes with every try; counting it, offline the screen would repeat the tries forever.
+- **The check runs again when the window or the flags change**, not only when the user scrolls. After a short page the user may still be at the edge, and without this the list would stop. The chat list watches how many chats it has; the chat watches the bounds of its window (the newest and the oldest message), because a 300-message window that moves by a page keeps its size, and a count would miss the move.
+- **Items are counted, not rows.** The loading row at the end comes and goes with every try; if it were counted, the screen would keep retrying forever while offline.
 - **A second Intent while a page is loading is ignored** by the Executor (`isLoadingMore`, `isLoadingOlder`, `isLoadingNewer`). The Store runs on the main thread, so that check holds without a lock (see [Screens](screens.md#the-store)).
 
-The chat's list is drawn upside down (`reverseLayout = true`): its first item is the newest message, at the bottom by the input. So "the top" of a chat is the end of its list.
+The chat's list is drawn upside down (`reverseLayout = true`): its first item is the newest message, at the bottom next to the input field. So "the top" of a chat is the end of its list.
 
 &nbsp;
 
@@ -84,7 +84,7 @@ The list doesn't load its first page itself: the sync does, on the socket's firs
 |---|---|---|
 | opens the screen | `(0, 50)` | 1–50 |
 | scrolls down | `(0, 100)`, then `(0, 150)` | 1–150 |
-| scrolls further | `(50, 150)` | 51–200: the top leaves the subscription |
+| scrolls further | `(50, 150)` | 51–200: the top 50 are no longer watched |
 | scrolls further | `(100, 150)` | 101–250 |
 
 Before the window moves, the chats it moves onto are loaded:
@@ -103,7 +103,7 @@ suspend fun loadBelow() {
 ```
 
 - **`ensureLoaded(count)`** loads page after page below the boundary (`GET /conversations?beforeSortKey`) until the cache has that many chats or the server has nothing more. If the user scrolled this far before, the cache has them already and there is no request at all.
-- **Offline it fails with `IOException`, and the window stays as it was**: there is nothing to undo. The screen shows a snackbar, and the next try comes when the user scrolls again.
+- **Offline it fails with `IOException`, and the window stays as it was**: there is nothing to undo. The screen shows a snackbar, and it tries again when the user scrolls again.
 - **`compareAndSet`**: if the window changed while the page was loading, the new one isn't overwritten.
 
 ### Scrolling back up
@@ -112,10 +112,10 @@ Everything above the window is cached already, so `loadAbove()` only moves the w
 
 ### When the list changes under the window
 
-- **A chat rises to the top** with a new message: its `sortKey` grows, it passes the boundary, and Room re-reads the window. If the user is at the very top, the screen follows it (`FollowTop`, see [Screens](screens.md#lists-that-grow-at-an-edge)); further down the user keeps their place.
-- **The list starts over** (`resetRequired`) or chats go away while the window is deep down: the window points where there are no chats now, so the paginator returns it to the top.
-- **A page from the old list** arrives after the sync started the list over: the boundary has changed meanwhile, so the page is dropped instead of leaving a gap, and the next try loads the right one.
-- **An empty page counts as the end** of the list, so loading more can't go round forever.
+- **A chat moves to the top** with a new message: its `sortKey` grows, it passes the boundary, and Room re-reads the window. If the user is at the very top, the screen follows it (`FollowTop`, see [Screens](screens.md#lists-that-grow-at-an-edge)); further down the user keeps their place.
+- **The list starts over** (`resetRequired`), or chats disappear while the window is far down: the window now points where there are no chats, so the paginator moves it back to the top.
+- **A page from the old list** arrives after the sync has started the list over: the boundary has changed in the meantime, so the page is dropped instead of leaving a gap, and the next try loads the right one.
+- **An empty page counts as the end** of the list, so loading more can't loop forever.
 
 &nbsp;
 
@@ -136,13 +136,13 @@ A window is the head only while the user is at the bottom of the chat. Once the 
 
 `ChatExecutor.onStart` opens the chat once, when the screen's Store is made:
 
-1. **With unread messages**, it opens at the first unread one (`openAt(lastReadSeq + 1)`): a page around it is loaded if it isn't cached, and the window covers what the cache has around it without a gap, up to 25 messages each way. The "New messages" divider goes above it, and the screen scrolls to it.
+1. **If there are unread messages**, it opens at the first unread one (`openAt(lastReadSeq + 1)`): a page around it is loaded if it isn't cached, and the window covers the gapless part of the cache around it, up to 25 messages each way. The "New messages" divider goes above it, and the screen scrolls to it.
 2. **Otherwise**, it opens the newest cached messages, at once and from the cache only (`openLatest`), as the head.
-3. **Then, in both cases**, it refreshes from the network (`refreshLatest`): the chat itself for its `lastSeq`, the edits of the cached messages, and the latest page. New messages that continue the cache join the head by themselves.
+3. **Then, in both cases**, it refreshes from the network (`refreshLatest`): the chat itself, to get its `lastSeq`, edits to the cached messages, and the latest page. New messages that continue the cache join the head by themselves.
 
-If the chat wasn't opened for long, there is a gap between the cache and the latest page, and the head can't step over it. Then the window moves to the latest page, but only if it is still the head the user left. A window opened at the first unread message, or one the user scrolled meanwhile, stays where it is, and the "to the latest" button leads down.
+If the chat hasn't been opened for a long time, there is a gap between the cache and the latest page, and the head can't step over it. The window then moves to the latest page, but only if it is still the head the user left. A window opened at the first unread message, or one the user has scrolled in the meantime, stays where it is, and the "to the latest" button takes the user down.
 
-Offline, steps 1–2 work from the cache and step 3 fails: the chat stays on screen, and a snackbar says why nothing new comes.
+Offline, steps 1–2 work from the cache and step 3 fails: the chat stays on screen, and a snackbar explains why nothing new arrives.
 
 ### Scrolling up
 
@@ -159,7 +159,7 @@ if (newFromSeq == beforeSeq && error != null) throw error
 
 - **Offline the window grows by what the cache has** without a gap; the error reaches the screen only when the cache has nothing above at all.
 - **The window stops being the head**: its bottom is fixed at the newest message shown.
-- **Past 300 messages the newest go**, at the bottom the user left:
+- **Above 300 messages, the newest are cut off**, at the bottom the user has scrolled away from:
 
 ```text
 [701, 1000] scrolled up to 651  →  [651, 1000], 350 messages  →  [651, 950]
@@ -167,7 +167,7 @@ if (newFromSeq == beforeSeq && error != null) throw error
 
 ### Scrolling down
 
-`loadNewer` is the same downwards (`afterSeq`). When it reaches the chat's end (`lastSeq`), the window becomes the head again, and the Executor announces the messages that came at the bottom, as for a new message (see below). Past 300 messages the oldest go:
+`loadNewer` is the same downwards (`afterSeq`). When it reaches the chat's end (`lastSeq`), the window becomes the head again, and the Executor reports the messages that arrived at the bottom, as it does for a new message (see below). Above 300 messages, the oldest are cut off:
 
 ```text
 [651, 950] scrolled down to 1000  →  [651, 1000], 350 messages  →  [701, 1000]
@@ -175,30 +175,30 @@ if (newFromSeq == beforeSeq && error != null) throw error
 
 ### New messages at the bottom
 
-A page loaded below a window up in the history stays below the screen: the list keeps the user's place, and the user scrolls on to it. Following the bottom is only for the head.
+A page loaded below a window deep in the history stays below the screen: the list keeps the user's place, and the user scrolls down to it. The list follows the bottom only while the window is the head.
 
-A new message from the socket is cached only as a continuation of the cache (`seq == maxSeq + 1`), so it joins the head. When the head grows past 300, its oldest messages go, far above the screen. If the user is within three messages of the bottom, the screen scrolls down to the new one; reading higher up, the user keeps their place.
+A new message from the socket is cached only as a continuation of the cache (`seq == maxSeq + 1`), so it joins the head. When the head grows past 300, its oldest messages are cut off, far above the screen. If the user is within three messages of the bottom, the screen scrolls down to the new one; a user reading higher up keeps their place.
 
 ### Jumps
 
 | Jump | Does |
 |---|---|
 | **"To the latest" button** | shows while there are messages below the window (`hasNewer`); opens the newest cached messages as the head, scrolls to the bottom, then refreshes from the network |
-| **Sending from up in the history** | the same: the chat goes to its end, where the sent message shows |
-| **The toolbar button** | opens the window around a random message of the history, usually one not cached yet, so both scrolling directions load from the network; it is there to try the paging |
+| **Sending from deep in the history** | the same: the chat jumps to its end, where the sent message appears |
+| **The toolbar button** | opens the window around a random message from the history, usually one not cached yet, so scrolling either way loads from the network; it is there to try out the pagination |
 
 ### Races
 
-A paginator runs on the main thread, but its loads suspend, and the window may change meanwhile: a jump, a new message, the user scrolling the other way. Two rules keep a late answer from breaking the window:
+A paginator runs on the main thread, but its loads suspend, and the window may change in the meantime: a jump, a new message, the user scrolling the other way. Two rules keep a late answer from breaking the window:
 
-- **A load applies only to the window it started from.** It compares the window when it ends with the one it read at the start, and does nothing if they differ.
-- **The newest message shown is used only if it was read for the current window.** Right after a jump the screen still shows the old window's messages for a moment, and taking those would make a window that ends before it starts.
+- **A load applies only to the window it started from.** When it finishes, it compares the current window with the one it read at the start, and does nothing if they differ.
+- **The newest message shown is used only if it was read for the current window.** Right after a jump, the screen still shows the old window's messages for a moment, and using them would produce a window that ends before it starts.
 
 &nbsp;
 
 ## Why not Paging 3
 
-Paging 3 with a `RemoteMediator` is built for a feed loaded from one end without gaps. The chat needs gaps in the cache, a head that grows by itself as messages come, and opening at any message; the list needs re-sorting as chats rise. Both fit in two small classes over Room: `ConversationsPaginator` is about 35 lines of code, `ChatPaginator` about 120.
+Paging 3 with a `RemoteMediator` is built for a feed loaded from one end without gaps. The chat needs gaps in the cache, a head that grows by itself as messages arrive, and opening at any message; the list needs re-sorting as chats move up. Both fit in two small classes over Room: `ConversationsPaginator` is about 35 lines of code, `ChatPaginator` about 120.
 
 &nbsp;
 
@@ -206,8 +206,8 @@ Paging 3 with a `RemoteMediator` is built for a feed loaded from one end without
 
 | Test | Checks |
 |---|---|
-| `MessageDaoTest`, `ConversationDaoTest` | the window queries on real SQL: no step over a gap, the head grows, the boundary |
-| `MessagesRepositoryImplTest` | pages from the cache or the server, offline growth by the cache, opening around a seq |
+| `MessageDaoTest`, `ConversationDaoTest` | the window queries on real SQL: never stepping over a gap, the growing head, the boundary |
+| `MessagesRepositoryImplTest` | pages from the cache or the server, growing from the cache while offline, opening around a seq |
 | `ChatPaginatorTest` | a load right after a jump doesn't empty the window |
-| `ChatViewModelTest` | opening at the first unread message, the head stopping when scrolling up, the window kept to 300, the head again at the end, the jump |
-| `ChatListViewModelTest` | the list window growing and then moving, scrolling back up without the network, offline, back to the top when the window points at nothing |
+| `ChatViewModelTest` | opening at the first unread message, the head stopping when scrolling up, the window kept to 300, becoming the head again at the end, the jump |
+| `ChatListViewModelTest` | the list window growing and then moving, scrolling back up without the network, working offline, returning to the top when the window points at nothing |

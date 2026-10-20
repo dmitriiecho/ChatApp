@@ -64,7 +64,7 @@ fun EntryProviderScope<NavKey>.chatsEntries(
 
 - **Moving between a feature's own screens** goes through `Navigator` from `:core:compose-utils`, a two-method interface (`navigate(key)`, `goBack()`). The app implements it as `AppNavigator` over its back stack.
 - **Paths between features are callbacks in `:app`**, since features don't know each other.
-- **What belongs to the app is passed in**: the theme lives in `MainActivity`, so the chat list only gets `onToggleTheme`.
+- **What belongs to the app is passed in from outside**: the theme lives in `MainActivity`, so the chat list only gets `onToggleTheme`.
 
 &nbsp;
 
@@ -82,7 +82,7 @@ LaunchedEffect(isSignedIn) {
 }
 ```
 
-- **A sign-in or a sign-out replaces the stack whole**, so Back never leads to the other side.
+- **Signing in or out replaces the whole stack**, so Back never returns to the sign-in screen after signing in, or to the chats after signing out.
 - **The sign-in screen has no callbacks at all**: it calls `login(user)`, the session changes, and the app opens the chat list. Signing out from the list works the same way in reverse.
 - **While the session loads** from Room, the app shows nothing rather than flashing the sign-in.
 
@@ -101,7 +101,7 @@ entryDecorators = listOf(
 ),
 ```
 
-So two chats opened one over the other have two `ChatViewModel`s, and closing a chat clears its ViewModel and the Store inside. A screen's arguments go from its key to its ViewModel through Koin:
+So two chats opened one on top of the other have two separate `ChatViewModel`s, and closing a chat clears its ViewModel along with the Store inside it. A screen's arguments go from its key to its ViewModel through Koin:
 
 ```kotlin
 // ChatScreen.kt
@@ -120,7 +120,7 @@ internal class ChatViewModel(
 
 ## Navigation goes through an Effect
 
-A tap on a chat doesn't navigate from the UI: it is an Intent, and the Executor answers with an Effect that the screen turns into the callback:
+A tap on a chat doesn't navigate straight from the UI: it becomes an Intent, and the Executor answers with an Effect that the screen turns into a callback call:
 
 ```kotlin
 // ChatListExecutor
@@ -135,13 +135,13 @@ ObserveEffects(viewModel.effects) { effect ->
 }
 ```
 
-Android's guide suggests navigating from the UI instead. Here every user action passes the Store, so its log (`adb logcat -s Store`) shows the whole story, and a test of the ViewModel checks navigation as one more Effect. The Channel is safe for this because the Store sends and `ObserveEffects` receives on `Main.immediate` (see [Screens](screens.md#effects)).
+Android's guide suggests navigating from the UI instead. Here every user action goes through the Store, so its log (`adb logcat -s Store`) shows the whole story, and a test of the ViewModel checks navigation as one more Effect. The Channel is safe for this because the Store sends and `ObserveEffects` receives on `Main.immediate` (see [Screens](screens.md#effects)).
 
 &nbsp;
 
 ## Entries keep what they captured
 
-Navigation 3 keeps an entry's content until the back stack changes. A value captured when the entry was created stays the same even when the app later passes a new one, so two rules follow:
+Navigation 3 keeps an entry's content until the back stack changes. A value captured when the entry was created stays the same even when the app later passes a new one. Two rules follow from this:
 
 > [!IMPORTANT]
 > A callback that can change is read through `rememberUpdatedState`, and a value that changes while the screen is shown (the theme) comes from a CompositionLocal (`LocalDarkTheme`), not a parameter.
@@ -153,13 +153,13 @@ val currentOnToggleTheme by rememberUpdatedState(onToggleTheme)
 chatsEntries(navigator, onToggleTheme = { currentOnToggleTheme() })
 ```
 
-The theme button in the chat list reads `LocalDarkTheme.current` for its icon. Passed down as a parameter, the theme would keep its first value inside the entry, and the icon would stop following the theme.
+The theme button in the chat list picks its icon from `LocalDarkTheme.current`. If the theme were passed down as a parameter, the entry would keep its first value, and the icon would stop changing with the theme.
 
 &nbsp;
 
 ## No transitions
 
-`NavDisplay` animates every change of the back stack by default, with a 700 ms crossfade. That felt slow for a chat, so all three transitions are off:
+By default, `NavDisplay` animates every back stack change with a 700 ms crossfade. That felt slow for a chat, so all three transitions are turned off:
 
 ```kotlin
 transitionSpec = { noTransition },
@@ -167,4 +167,4 @@ popTransitionSpec = { noTransition },
 predictivePopTransitionSpec = { noTransition },
 ```
 
-The crossfade also hid the first frames of a chat before its messages came from Room; without it, a chat may show empty for a moment (under 0.3 s on the emulator).
+The crossfade also hid a chat's first frames, before its messages arrived from Room; without it, a chat may look empty for a moment (under 0.3 s on the emulator).

@@ -38,9 +38,9 @@ Pages, syncs, the socket and pushes all write into Room, and a screen watches a 
 server ──page / sync / socket / push──▶ Room ──observe a window──▶ Executor ──▶ State
 ```
 
-- **Offline, the cache opens at once.** A chat opened before shows its messages without the network, and the newest ones come when it is back.
+- **Offline, the cache opens at once.** A chat opened before shows its messages without a network, and the newest ones arrive once it is back.
 - **Every source writes the same way**, so a message is the same whether a page, a sync or the socket brought it.
-- **A screen never merges two sources** (a list from the network plus a list from the cache): it reads one query.
+- **A screen never merges two sources** (a list from the network plus a list from the cache): it reads the result of one query.
 
 &nbsp;
 
@@ -62,7 +62,7 @@ The same message may come several times and out of order — from the socket, a 
 
 ## The chat's window
 
-A chat's messages have numbers without gaps: `seq` 1, 2, 3… in each chat. The cache, though, may have gaps: a chat opened at its first unread message has a piece of history in the middle. The screen watches a window of two seqs:
+A chat's messages have numbers without gaps: `seq` 1, 2, 3… in each chat. The cache, though, may have gaps: for a chat opened at its first unread message, it holds only a piece from the middle of the history. The screen watches a window set by two seqs:
 
 | Window | Shows |
 |---|---|
@@ -91,7 +91,7 @@ abstract fun observeWindow(conversationId: String, fromSeq: Long, toSeq: Long?):
 - **Room re-reads the whole window on every change**, so it is kept to 300 messages. The excess is cut where the user isn't looking: at the bottom when scrolling up, at the top when scrolling down. What is cut stays in Room and comes back when the user scrolls there.
 - **Opening at a message** (`aroundSeq`: the first unread, or a jump from the toolbar button) loads a page around it, with gaps above and below that load as the user scrolls.
 
-Step by step, with the races between loads, in [Pagination](pagination.md#the-chat).
+The steps, and the races between loads, are in [Pagination](pagination.md#the-chat).
 
 &nbsp;
 
@@ -112,11 +112,11 @@ abstract fun observeLoaded(offset: Int, limit: Int): Flow<List<ConversationEntit
 |---|---|---|
 | opens the screen | `(0, 50)` | 1–50 |
 | scrolls down | `(0, 100)`…`(0, 150)` | grows by pages of 50 |
-| scrolls further | `(50, 150)` | 51–200: the top leaves the subscription |
+| scrolls further | `(50, 150)` | 51–200: the top 50 are no longer watched |
 | scrolls back up | `(0, 150)` | everything above is cached, so no network |
 
 - **Re-sorting happens in the query**: a new message raises a chat's `sortKey`, and Room re-reads the window.
-- **A chat deep down isn't kept** when only its change comes (from a sync or the socket): the page brings it fresh when the user scrolls there. A chat that rose to the top passes the boundary and shows.
+- **A chat below the boundary isn't cached** when only a change to it arrives (from a sync or the socket): a page brings it fresh when the user scrolls there. A chat that rises to the top passes the boundary and appears in the list.
 
 How the list's window grows and moves is in [Pagination](pagination.md#the-chat-list). Paging 3 isn't used: the chat needs gaps, a head that grows by itself and opening at a seq, and `RemoteMediator` is built for a feed without gaps.
 
@@ -134,7 +134,7 @@ The cache is [Room 3](https://developer.android.com/jetpack/androidx/releases/ro
 | `outgoing_messages` | the outbox: messages not on the server yet |
 | `session` | who is signed in |
 
-- **The database is a cache**, so a schema change drops it instead of migrating (`fallbackToDestructiveMigration(dropAllTables = true)`), and everything loads again; the sign-in goes too. The schema of each version is committed in [`crossfeature/data/schemas`](../../../crossfeature/data/schemas/).
+- **The database is a cache**, so a schema change drops it instead of migrating (`fallbackToDestructiveMigration(dropAllTables = true)`), and everything loads again; the user is signed out too. The schema of each version is committed in [`crossfeature/data/schemas`](../../../crossfeature/data/schemas/).
 - **Room runs on `AndroidSQLiteDriver`**, the one Robolectric can run in the DAO tests; for Kotlin Multiplatform the driver changes in one line.
 - **A write and its sync token go in one transaction** (`withWriteTransaction`): see [Sync](sync.md#sync-by-token).
 
@@ -155,14 +155,14 @@ suspend inline fun <T> callApi(block: suspend () -> T): T = try {
 ```
 
 - **To a screen, `IOException` means "no connection"**: the Executors catch `java.io.IOException` only and never see Ktor's exceptions.
-- **Every request is signed** with two headers, `X-Api-Key` and `X-User-Id`. `AuthHeaders` gives them for each request, so a sign-in or a sign-out applies to the next one. `SessionAuthHeaders` in `:crossfeature:data` reads the user from the session.
+- **Every request carries two headers**, `X-Api-Key` and `X-User-Id`. `AuthHeaders` provides them for each request, so signing in or out takes effect from the very next one. `SessionAuthHeaders` in `:crossfeature:data` reads the user from the session.
 - **The key isn't in git**: it comes from `chatapp.apiKey` in `local.properties` into `BuildConfig`, and from there into Koin. Without it the app builds, as on CI, and the server answers 401.
-- **No request timeout**: it would also end the events socket, which stays open for as long as the app is on screen. Connecting and reading time out after 30 s, and the socket finds a dead connection by its ping every 15 s.
+- **No timeout for a whole request**: it would also cut the events socket, which stays open as long as the app is on screen. Connecting and reading time out after 30 s, and the socket detects a dead connection with a ping every 15 s.
 
 <details>
 <summary>Why the session in memory is a class of its own</summary>
 
-The HTTP client needs the headers, so it needs the session. Signing out needs the background work stopped first: the socket and the outbox. The socket needs the HTTP client. With the session and the sign-out in one class, Koin would get a cycle: `SessionRepository` → `SessionWork` → `RealtimeConnection` → `HttpClient` → `AuthHeaders` → `SessionRepository`. So the session held in memory, `SessionStore`, is apart from `SessionRepositoryImpl`, and the headers read only `SessionStore`.
+The HTTP client needs the headers, so it needs the session. Signing out needs the background work stopped first: the socket and the outbox. The socket needs the HTTP client. With the session and the sign-out in one class, Koin would get a cycle: `SessionRepository` → `SessionWork` → `RealtimeConnection` → `HttpClient` → `AuthHeaders` → `SessionRepository`. So the session held in memory, `SessionStore`, is separate from `SessionRepositoryImpl`, and the headers read only `SessionStore`.
 
 </details>
 

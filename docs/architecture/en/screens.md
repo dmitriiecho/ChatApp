@@ -2,7 +2,7 @@
 
 [Русская версия](../ru/screens.md) · [All pages](README.md)
 
-Every screen runs on MVI, on a small core of the project's own in `:core:mvi`. Data goes one way, in a loop: the UI sends an Intent, the Executor does the work and reports Mutations, the Reducer turns each into a new State, and the UI draws it. One-off events, like navigation and snackbars, go from the Executor to the UI as Effects.
+Every screen runs on MVI, using a small core written for the project, in `:core:mvi`. Data goes one way, in a loop: the UI sends an Intent, the Executor does the work and reports Mutations, the Reducer turns each into a new State, and the UI draws it. One-off events, like navigation and snackbars, go from the Executor to the UI as Effects.
 
 ```text
 UI ──Intent──▶ Store ──▶ Executor ──Mutation──▶ Reducer ──▶ State ──▶ UI
@@ -29,9 +29,9 @@ The State, Intents, Mutations and Effects sit together in one `ChatListContract.
 
 &nbsp;
 
-## Why an own core
+## Why a core of its own
 
-MVIKotlin and Orbit are the well-known MVI libraries for Kotlin. The core here is about 110 lines of code and borrows MVIKotlin's names (Store, Executor, Reducer, the Bootstrapper as `onStart`), but stays small enough to read in one sitting and to change when a screen needs something new. It is pure Kotlin, with no Android, so the screens' logic is ready for Kotlin Multiplatform.
+MVIKotlin and Orbit are the well-known MVI libraries for Kotlin. The core here is about 110 lines of code. It borrows MVIKotlin's names (Store, Executor, Reducer, and `onStart` for the Bootstrapper), but stays small enough to read in one sitting and to change when a screen needs something new. It is pure Kotlin, with no Android, so the screens' logic is ready for Kotlin Multiplatform.
 
 | Class | Does |
 |---|---|
@@ -62,8 +62,8 @@ fun accept(intent: Intent) {
 }
 ```
 
-- **The Store runs in `viewModelScope`**, on the main thread. A check of the State in the Executor, like "a request is already on its way", then holds until its next suspension, and a quick double tap is ignored without a lock.
-- **An Effect waits in the Channel** when the screen isn't collecting: during a rotation, or while the app is in the background. A `SharedFlow` would drop it.
+- **The Store runs in `viewModelScope`**, on the main thread. So when the Executor checks the State, for example "a request is already on its way", nothing can change it until the Executor's next suspension, and a quick double tap is ignored without any lock.
+- **An Effect waits in the Channel** while the screen isn't collecting: during a rotation, or while the app is in the background. A `SharedFlow` would drop it.
 - **The Executor gets the Store only for the length of a call** (`StoreAccess`), so it can't change the State from a stale coroutine after the call is over.
 
 &nbsp;
@@ -82,11 +82,11 @@ interface Executor<Intent, State, Mutation, Effect> {
 
 | Entry point | Runs | For |
 |---|---|---|
-| `onStart` | once, when the Store is made; not again after a rotation | one-off work of the start: opening a chat at its first unread message, loading the users of the sign-in |
-| `whileSubscribed` | while the screen collects the State; cancelled 5 s after it stops | observing data, so nothing is observed in the background |
+| `onStart` | once, when the Store is made; not again after a rotation | one-off work when the screen opens: opening a chat at its first unread message, loading the users for the sign-in screen |
+| `whileSubscribed` | while the screen collects the State; cancelled 5 s after it stops | observing data, so that nothing is observed in the background |
 | `execute` | for each Intent, in its own coroutine | the user's actions |
 
-The 5 seconds are the same rule as `stateIn(WhileSubscribed(5_000))`: a rotation resubscribes within the timeout, so the observation doesn't restart. The chat list observes its window and the session this way:
+The 5 seconds follow the same rule as `stateIn(WhileSubscribed(5_000))`: after a rotation the screen subscribes again well within that time, so the observation doesn't restart. The chat list observes its window and the session this way:
 
 ```kotlin
 override suspend fun whileSubscribed(store: ChatListStore) = coroutineScope {
@@ -106,7 +106,7 @@ An Executor must not throw: an uncaught exception in `viewModelScope` crashes th
 
 ## The ViewModel
 
-The ViewModel only holds the Store. It builds the Executor itself from its own dependencies, which also carries the screen's arguments:
+The ViewModel only holds the Store. It builds the Executor itself, from its own dependencies and the screen's arguments:
 
 ```kotlin
 @KoinViewModel
@@ -132,7 +132,7 @@ internal class ChatViewModel(
 }
 ```
 
-The Executor isn't in Koin: Koin would bind both screens' Executors to the one `Executor` key.
+The Executor isn't registered in Koin: Koin would bind both screens' Executors to the same `Executor` key.
 
 `StoreFactory` comes from `:app`. In a debuggable build every Store logs its Intents, Mutations and Effects to Logcat:
 
@@ -195,7 +195,7 @@ initialState = ChatState(input = savedStateHandle.savedTextField(INPUT_KEY)),
 
 - **There is no Intent per keystroke.** Typing never waits for the Store and can't drop characters.
 - **Values derived from the text are getters** on the State: `val canSend get() = input.text.isNotBlank()`.
-- **The Executor reads the text when the user sends** and clears the field first, so a second tap finds it empty and can't send the message twice.
+- **The Executor reads the text when the user taps Send** and clears the field first, so a second tap finds it empty and can't send the message twice.
 
 &nbsp;
 
@@ -213,9 +213,9 @@ ObserveEffects(viewModel.effects) { effect ->
 }
 ```
 
-- **Effects are collected while the screen is visible** (`repeatOnLifecycle(STARTED)`), on `Main.immediate`: the screen handles an Effect right inside the Store's `send`. With a pause in between, a screen stopping at that moment could take the Effect from the channel and lose it.
+- **Effects are collected while the screen is visible** (`repeatOnLifecycle(STARTED)`), on `Main.immediate`: the screen handles an Effect right inside the Store's `send`. If there were a delay between the two, a screen that stops at that moment could take the Effect from the channel and lose it.
 - **`navigate { }` runs only while the screen is on top**, so after a quick double tap the second navigation is dropped.
-- **`showSnackbar` runs in its own coroutine**: a snackbar suspends until it is dismissed and would otherwise hold up the next Effect.
+- **`showSnackbar` runs in its own coroutine**: showing a snackbar suspends until it is dismissed, and would otherwise hold up the next Effect.
 
 &nbsp;
 
@@ -240,13 +240,13 @@ internal fun ChatScreen(
 )
 ```
 
-The second one doesn't depend on Koin, so it is previewed in any State. `onIntent` stays in the screen's file; sections in `components/` (`MessageBubble`, `MessageInput`, `BotsBar`) get specific callbacks instead, so they know nothing about the screen's Intents and are previewed on their own.
+The second one doesn't depend on Koin, so it can be previewed with any State. `onIntent` stays in the screen's file; sections in `components/` (`MessageBubble`, `MessageInput`, `BotsBar`) get specific callbacks instead, so they know nothing about the screen's Intents and have previews of their own.
 
 &nbsp;
 
 ## Lists that grow at an edge
 
-A `LazyColumn` keeps its first visible item in place by key. When a chat rises to the top of the list, or a new message comes at the bottom of a chat, the new item lands just past the screen's edge, and a user at that edge wouldn't see it. So when the user is at the edge, the screen asks the list to stay there:
+A `LazyColumn` keeps its first visible item in place by key. When a chat moves to the top of the list, or a new message arrives at the bottom of a chat, the new item lands just past the screen's edge, and a user looking at that edge wouldn't see it. So when the user is at the edge, the screen asks the list to stay there:
 
 ```kotlin
 // FollowBottom in ChatScreen.kt; FollowTop in ChatListScreen.kt is the same at the top
@@ -257,12 +257,12 @@ SideEffect {
 }
 ```
 
-`SideEffect` runs before the list measures the change, while it is still where the user left it. A user reading higher up keeps their place. In a chat this is only for the head: a page loaded below a window up in the history stays below, where the user scrolls to it (see [Pagination](pagination.md#new-messages-at-the-bottom)).
+`SideEffect` runs before the list measures the change, while the list is still where the user left it. A user reading further from the edge keeps their place. In a chat this applies only to the newest messages: a page loaded below a window deep in the history stays below, and the user scrolls down to it (see [Pagination](pagination.md#new-messages-at-the-bottom)).
 
 &nbsp;
 
 ## Components and previews
 
-A screen is assembled from ready-made components: every styled element comes from `:core:designsystem` or `:crossfeature:ui` (see [Modules](modules.md#where-new-code-goes)). The top bar of every screen is `AppTopBar`, and the bars at the bottom are `AppBottomBar`, so the screens share one frame.
+A screen is assembled from ready-made components: every styled element comes from `:core:designsystem` or `:crossfeature:ui` (see [Modules](modules.md#where-new-code-goes)). The top bar of every screen is `AppTopBar`, and the bars at the bottom are `AppBottomBar`, so all screens share the same frame.
 
-Previews live next to the code they show, are private, and come in light and dark themes. Every preview is also a [screenshot test](testing.md#screenshots).
+Previews live next to the code they show, are private, and come in both the light and the dark theme. Every preview is also a [screenshot test](testing.md#screenshots).
